@@ -1,450 +1,172 @@
+<div align="center">
+
 # Agent Security Gateway
 
-**A production-hardened, stateful security gateway for AI agents that inspects prompts, tool calls, session behavior, approvals, and outputs before execution.**
+### A production-hardened, stateful security gateway for AI agents
+
+<p>
+  <img src="https://img.shields.io/badge/STATUS-v1.0.0-111111?style=for-the-badge&logo=github&logoColor=white" />
+  <img src="https://img.shields.io/badge/TESTS-86%20PASSING-111111?style=for-the-badge&logo=checkmarx&logoColor=white" />
+  <img src="https://img.shields.io/badge/PYTHON-3.11%2B-111111?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/FASTAPI-GATEWAY-111111?style=for-the-badge&logo=fastapi&logoColor=white" />
+</p>
 
 **Secure the agent before it acts.**
 
-Agent Security Gateway is a control layer that sits between an agent runtime and real side effects. It inspects input risk, planned actions, tool execution, session buildup, approval requirements, and returned outputs before sensitive operations are allowed to proceed.
+</div>
 
-The system is designed for agent environments that can touch shell, filesystem, network, memory, and other high-risk execution surfaces. It combines deterministic policy enforcement with session-aware escalation, approval control, central redaction, and operator visibility.
+---
 
-This repository is a serious internal baseline for securing agent execution paths. It is not a claim of complete agent safety, and it should be deployed as one layer in a broader defense-in-depth stack.
+## Overview
+
+Agent Security Gateway sits between an AI agent and real-world execution surfaces.
+
+It inspects prompts, tool calls, session behavior, approval requirements, and returned outputs **before** sensitive actions are allowed to proceed. The goal is simple: convert free-moving agent behavior into a controlled, auditable, policy-enforced execution path.
+
+This project is a serious internal baseline for agent security. It is designed to reduce operational risk, not to claim perfect safety.
 
 ---
 
 ## Why this exists
 
-Modern agent systems can move from text to action quickly. That creates a dangerous gap between what the model *intends* and what the system *actually executes*.
+Modern agents can move from text to action fast:
 
-This project closes that gap by introducing a dedicated gateway that:
+- prompt → plan
+- plan → tool call
+- tool call → shell, filesystem, network, memory
+- output → leakage, drift, or escalation
 
-- inspects prompts, outputs, and tool calls before execution
-- tracks risk across multi-step sessions
-- mediates execution through controlled adapters
-- requires approval for high-risk actions
-- sanitizes sensitive outputs before they are returned
-- exposes audit and operator visibility for review
+Without a security layer, that chain is too direct.
+
+This gateway introduces a single control path that can:
+
+- inspect risky intent
+- score multi-step session behavior
+- require approval for dangerous actions
+- redact sensitive output
+- expose audit and operator visibility
+- enforce auth, rate limiting, and health boundaries at the service edge
 
 ---
 
 ## Architecture
 
-```text
-User / Agent Runtime
-        |
-        v
-Agent Security Gateway
-  - Detection
-  - Policy
-  - Session Risk
-  - Approval
-  - Redaction
-  - Audit
-  - Auth / Rate Limit / Metrics
-        |
-        v
-Controlled Adapters
-  - Shell
-  - Filesystem
-  - HTTP
-  - Memory
-        |
-        v
-Execution Surfaces
+```mermaid
+flowchart TD
+    A[User / Agent Runtime] --> B[Agent Security Gateway]
+
+    subgraph B1[Gateway Control Plane]
+        B --> C[Detection]
+        B --> D[Policy]
+        B --> E[Session Risk]
+        B --> F[Approval]
+        B --> G[Redaction]
+        B --> H[Audit]
+        B --> I[Auth / Rate Limit / Metrics]
+    end
+
+    B --> J[Controlled Adapters]
+
+    subgraph J1[Execution Adapters]
+        J --> K[Shell]
+        J --> L[Filesystem]
+        J --> M[HTTP]
+        J --> N[Memory]
+    end
+
+    K --> O[Execution Surfaces]
+    L --> O
+    M --> O
+    N --> O
 ```
 
-### Core design rules
+### Design rules
 
-- **Single enforcement path:** security decisions are made in the gateway/service layer.
-- **Thin adapters:** adapters do not implement their own policy engines.
-- **Fail closed:** invalid auth, invalid approvals, replayed permits, and denied decisions do not execute.
-- **Central redaction:** sensitive output masking happens in one pipeline, not in scattered tool wrappers.
-- **Session-aware evaluation:** repeated lower-risk behavior can escalate to a higher-risk decision over time.
-
----
-
-## What this repo provides
-
-### `firewall` library
-The security core used by both direct code integration and the HTTP gateway.
-
-Includes:
-- deterministic detectors
-- chain guard
-- policy engine
-- session risk evaluation
-- approval persistence
-- audit persistence
-- redaction pipeline
-- logging utilities
-- thin execution adapters
-- direct library and CLI entrypoints
-
-### `gateway` service
-An HTTP service layered over the firewall library.
-
-Provides:
-- inspection endpoints
-- approval endpoints
-- operator overview and session timeline
-- health and readiness probes
-- metrics endpoint
-- auth and rate limiting middleware
+- **Single enforcement path** — decisions are made in the gateway/service layer
+- **Thin adapters** — adapters do not carry their own policy engines
+- **Fail closed** — denied, invalid, expired, or replayed requests do not execute
+- **Central redaction** — masking happens in one pipeline, not ad hoc in adapters
+- **Session-aware enforcement** — repeated lower-risk behavior can escalate over time
 
 ---
 
 ## Core capabilities
 
-- Prompt injection detection
-- Secret leakage detection
-- Unsafe tool-abuse detection
-- Action-chain risk analysis
-- Session-aware escalation
-- Approval-gated execution for risky actions
-- Central output redaction
-- Operator console and timeline APIs
-- Auth, rate limiting, metrics, and health checks
-- Docker-ready deployment path
+<table>
+  <tr>
+    <td><b>Inspection</b></td>
+    <td>Prompt injection, secret leakage, indirect tool abuse, unsafe action-chain detection</td>
+  </tr>
+  <tr>
+    <td><b>Session Risk</b></td>
+    <td>Cross-call escalation, staged action tracking, cumulative risk scoring</td>
+  </tr>
+  <tr>
+    <td><b>Execution Control</b></td>
+    <td>Mediated shell, filesystem, HTTP, and memory adapters</td>
+  </tr>
+  <tr>
+    <td><b>Approval</b></td>
+    <td>One-time, expiring, action-bound permits for high-risk actions</td>
+  </tr>
+  <tr>
+    <td><b>Redaction</b></td>
+    <td>Central masking of secrets, high-entropy tokens, and optional PII</td>
+  </tr>
+  <tr>
+    <td><b>Visibility</b></td>
+    <td>Operator overview, session timeline, audit persistence, metrics</td>
+  </tr>
+  <tr>
+    <td><b>Service Hardening</b></td>
+    <td>Auth, rate limiting, health/readiness probes, Docker packaging</td>
+  </tr>
+</table>
 
 ---
 
 ## Decision model
 
-The gateway can return the following enforcement decisions:
+The gateway can return:
 
-- **allow** — execute normally
-- **allow_with_redaction** — execute, but sanitize output before returning it
-- **challenge** — deny execution by default and require further handling
-- **require_approval** — execution paused pending approval
-- **block** — deny execution
+| Decision | Meaning |
+|---|---|
+| `allow` | Execute normally |
+| `allow_with_redaction` | Execute, but sanitize returned output |
+| `challenge` | Deny by default and require further handling |
+| `require_approval` | Pause execution pending approval |
+| `block` | Deny execution |
 
-### Important behavior
+### Important semantics
 
 - `allow_with_redaction` only upgrades from a base `allow`
 - a true `block` remains `block`
-- approval only satisfies the approval gate for the exact approved action context
-- approval does **not** bypass other inspection logic
+- approval is bound to normalized action context
+- approval does **not** bypass the rest of inspection
+- replayed or expired permits fail closed
 
 ---
 
-## API surface
-
-### Health / readiness / metrics
-- `GET /health`
-- `GET /ready`
-- `GET /metrics`
-
-### Inspection
-- `POST /inspect/input`
-- `POST /inspect/tool-call`
-
-### Approval
-- `POST /approval/submit`
-- `POST /approval/resolve`
-
-### Operator visibility
-- `GET /operator`
-- `GET /operator/api/overview`
-- `GET /operator/api/session/{session_id}/timeline`
-
----
-
-## How enforcement works
-
-### Pre-execution path
-1. Agent proposes input or tool action
-2. Gateway normalizes request context
-3. Detectors inspect content and intent
-4. Session risk is loaded and evaluated
-5. Policy returns a decision
-6. Execution is allowed, blocked, challenged, or paused for approval
-
-### Post-execution path
-1. Tool output is sent through the central redaction pipeline
-2. Sanitized output is used for post-inspection
-3. Decision metadata and audit records are updated
-4. Caller receives either safe raw output or sanitized output
-
----
-
-## Redaction pipeline
-
-Redaction is centralized in the service layer.
-
-### Supported masking
-- secret key/value forms such as `api_key=...` and `token=...`
-- JWT-like and AWS-key-like patterns
-- high-entropy token masking
-- optional PII masking for email, phone, and SSN
-
-### Deterministic token format
-```text
-[REDACTED:<kind>:<sha256-prefix>]
-```
-
-### Example
-Raw:
-```text
-api_key=SECRET123 user=alice@example.com
-```
-
-Sanitized:
-```text
-api_key=[REDACTED:secret:...] user=[REDACTED:pii_email:...]
-```
-
----
-
-## Adapters
-
-All adapters are intentionally restricted and enforcement-only.
-
-### ShellAdapter
-- `shell=False`
-- executable allowlist required
-- timeout and output-size caps
-
-### FileSystemAdapter
-- rooted base directory only
-- path traversal rejected
-- bounded read/write sizes
-
-### HttpAdapter
-- only `GET` and `POST`
-- host allowlist required
-- bounded response size
-
-### MemoryAdapter
-- minimal key/value read/write only
-
-### Adapter rules
-- pre-inspect → enforce → execute → sanitize → post-inspect
-- adapters do not embed policy logic
-- blocked and challenged actions do not execute by default
-
----
-
-## Session-aware risk
-
-The gateway tracks risk across requests within a session.
-
-Stored session state includes:
-- session ID
-- agent ID
-- prior actions
-- memory touched
-- cumulative risk
-- prior decisions
-- sensitive markers
-- timestamps and request count
-
-This allows the system to detect:
-- repeated sensitive actions
-- cross-call unsafe chains
-- staged escalation patterns
-- session-level buildup not visible in a single request
-
----
-
-## Approval workflow
-
-The gateway supports one-time, expiring, action-bound approval permits.
-
-### Approval lifecycle
-1. inspection returns `require_approval`
-2. operator submits approval request
-3. operator resolves request as approved or denied
-4. an approved request issues a short-lived permit token
-5. caller retries with the approval token
-6. gateway validates token, context match, expiry, and single-use status
-7. permit is consumed if valid
-
-### Approval guarantees
-- bound to normalized action context
-- one-time use
-- expires
-- replayed permits fail closed
-- denied permits fail closed
-- approval does not override a true block
-
----
-
-## Operator console
-
-The operator view provides a minimal visibility plane for:
-
-- recent sessions
-- flagged events
-- approval state
-- decision history
-- per-session timeline
-
-The console is intentionally lightweight. It is meant to support review and debugging, not to be a full SIEM replacement.
-
----
-
-## Quickstart
-
-### Local install
-```powershell
-python -m pip install -e .
-```
-
-### Run the gateway
-```powershell
-uvicorn gateway.app:app --host 127.0.0.1 --port 8000
-```
-
-### Run tests
-```powershell
-python -m unittest discover -s tests -p "test_*.py"
-```
-
----
-
-## Production-like local run
-
-```powershell
-$env:FIREWALL_CONFIG="configs/production_profile.json"
-$env:GATEWAY_AUTH_ENABLED="true"
-$env:GATEWAY_API_KEYS="dev-secret-key"
-$env:GATEWAY_RATE_LIMIT_ENABLED="true"
-$env:GATEWAY_RATE_LIMIT_REQUESTS="120"
-$env:GATEWAY_RATE_LIMIT_WINDOW_SECONDS="60"
-uvicorn gateway.app:app --host 127.0.0.1 --port 8000
-```
-
----
-
-## Docker
-
-### Build
-```powershell
-docker build -t agent-security-gateway:local .
-```
-
-### Run
-```powershell
-docker run --rm -p 8000:8000 ^
-  -e GATEWAY_AUTH_ENABLED=true ^
-  -e GATEWAY_API_KEYS=dev-secret-key ^
-  -e GATEWAY_RATE_LIMIT_ENABLED=true ^
-  -e GATEWAY_RATE_LIMIT_REQUESTS=60 ^
-  -e GATEWAY_RATE_LIMIT_WINDOW_SECONDS=60 ^
-  -e FIREWALL_SESSION_DB=/tmp/gateway.sqlite3 ^
-  agent-security-gateway:local
-```
-
----
-
-## Example API flow
-
-### Inspect a risky tool call
-```bash
-curl -s http://127.0.0.1:8000/inspect/tool-call \
-  -H "content-type: application/json" \
-  -H "x-api-key: dev-secret-key" \
-  -d '{
-    "session_id":"sess-1",
-    "agent_id":"agent-a",
-    "tool_name":"shell",
-    "action":"cat ~/.ssh/id_rsa"
-  }'
-```
-
-### Submit approval
-```bash
-curl -s http://127.0.0.1:8000/approval/submit \
-  -H "content-type: application/json" \
-  -H "x-api-key: dev-secret-key" \
-  -d '{
-    "session_id":"sess-1",
-    "agent_id":"agent-a",
-    "tool_name":"shell",
-    "action":"cat ~/.ssh/id_rsa"
-  }'
-```
-
----
-
-## Configuration
-
-### Firewall / redaction
-- `FIREWALL_CONFIG`
-- `FIREWALL_SESSION_DB`
-- `FIREWALL_ALLOW_WITH_REDACTION`
-- `FIREWALL_REDACTION_ENABLED`
-- `FIREWALL_REDACTION_MASK_PII`
-- `FIREWALL_REDACTION_MIN_ENTROPY`
-- `FIREWALL_REDACTION_MIN_LENGTH`
-- `FIREWALL_REDACTION_MAX_ITEMS`
-
-### Gateway controls
-- `GATEWAY_AUTH_ENABLED=true|false`
-- `GATEWAY_AUTH_HEADER=x-api-key`
-- `GATEWAY_API_KEYS=key1,key2`
-- `GATEWAY_RATE_LIMIT_ENABLED=true|false`
-- `GATEWAY_RATE_LIMIT_REQUESTS=120`
-- `GATEWAY_RATE_LIMIT_WINDOW_SECONDS=60`
-
----
-
-## Profiles
-
-### Dev
-- `FIREWALL_CONFIG=configs/dev_profile.json`
-- auth disabled by default
-- easiest local workflow
-
-### Production
-- `FIREWALL_CONFIG=configs/production_profile.json`
-- auth enabled
-- rate limiting enabled
-- recommended baseline deployment profile
-
-### Strict
-- `FIREWALL_CONFIG=configs/strict_profile.json`
-- higher sensitivity
-- more aggressive blocking and redaction posture
-- greater false-positive risk
-
----
-
-## Threat model
-
-This gateway is designed to reduce risk from:
+## What the gateway protects against
 
 - prompt injection
-- indirect tool abuse
 - secret leakage
-- unsafe action chains
-- risky multi-step sessions
+- indirect tool abuse
+- unsafe multi-step chains
+- risky session buildup
 - sensitive output exposure
 
-It does **not** guarantee:
+## What it does **not** guarantee
+
 - complete jailbreak prevention
-- semantic-perfect attack understanding
-- protection if tools bypass the gateway
-- global multi-instance rate-limit enforcement in the current design
-- enterprise identity and key-management maturity in the current release
-
----
-
-## Operational assumptions and limits
-
-- API-key auth is shared-secret based
-- in-process rate limiting is per-instance, not cluster-global
-- `/health` and `/ready` are intentionally probe-friendly and should be network-restricted
-- rule-based detection and masking can miss novel encodings or fragmented leakage
-- some benign high-entropy strings may be masked by design
-- SQLite is used as a practical local/internal persistence baseline
-- this project should be deployed alongside sandboxing, IAM, egress control, and secret managers
+- perfect semantic reasoning against novel attacks
+- safety if tools bypass the gateway entirely
+- cluster-global rate limiting in the current release
+- enterprise identity maturity beyond shared-secret auth in the current release
 
 ---
 
 ## Repository structure
-
-The current repository layout includes the root files, config profiles, firewall library, gateway service, benchmark script, and tests shown in your actual tree. fileciteturn3file0
 
 ```text
 .
@@ -511,15 +233,164 @@ The current repository layout includes the root files, config profiles, firewall
 
 ---
 
-## Test status
+## Quickstart
 
-The current baseline was validated with:
+### Install
+```powershell
+python -m pip install -e .
+```
+
+### Run the gateway
+```powershell
+uvicorn gateway.app:app --host 127.0.0.1 --port 8000
+```
+
+### Run tests
+```powershell
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+### Production-like local run
+```powershell
+$env:FIREWALL_CONFIG="configs/production_profile.json"
+$env:GATEWAY_AUTH_ENABLED="true"
+$env:GATEWAY_API_KEYS="dev-secret-key"
+$env:GATEWAY_RATE_LIMIT_ENABLED="true"
+$env:GATEWAY_RATE_LIMIT_REQUESTS="120"
+$env:GATEWAY_RATE_LIMIT_WINDOW_SECONDS="60"
+uvicorn gateway.app:app --host 127.0.0.1 --port 8000
+```
+
+### Docker
+```powershell
+docker build -t agent-security-gateway:local .
+docker run --rm -p 8000:8000 ^
+  -e GATEWAY_AUTH_ENABLED=true ^
+  -e GATEWAY_API_KEYS=dev-secret-key ^
+  -e GATEWAY_RATE_LIMIT_ENABLED=true ^
+  -e GATEWAY_RATE_LIMIT_REQUESTS=60 ^
+  -e GATEWAY_RATE_LIMIT_WINDOW_SECONDS=60 ^
+  -e FIREWALL_SESSION_DB=/tmp/gateway.sqlite3 ^
+  agent-security-gateway:local
+```
+
+---
+
+## Configuration profiles
+
+| Profile | Purpose |
+|---|---|
+| `configs/dev_profile.json` | easiest local workflow |
+| `configs/production_profile.json` | recommended baseline deployment profile |
+| `configs/strict_profile.json` | higher sensitivity, more aggressive blocking/redaction |
+
+### Key environment controls
+
+- `FIREWALL_CONFIG`
+- `FIREWALL_SESSION_DB`
+- `FIREWALL_ALLOW_WITH_REDACTION`
+- `FIREWALL_REDACTION_ENABLED`
+- `FIREWALL_REDACTION_MASK_PII`
+- `GATEWAY_AUTH_ENABLED`
+- `GATEWAY_AUTH_HEADER`
+- `GATEWAY_API_KEYS`
+- `GATEWAY_RATE_LIMIT_ENABLED`
+- `GATEWAY_RATE_LIMIT_REQUESTS`
+- `GATEWAY_RATE_LIMIT_WINDOW_SECONDS`
+
+---
+
+## Redaction model
+
+Sensitive output masking is centralized in the service layer.
+
+### Supported masking
+- secret key/value forms such as `api_key=...` and `token=...`
+- JWT-like and AWS-key-like patterns
+- high-entropy tokens
+- optional PII masking for email, phone, and SSN
+
+### Deterministic mask format
+```text
+[REDACTED:<kind>:<sha256-prefix>]
+```
+
+### Example
+```text
+Raw:
+api_key=SECRET123 user=alice@example.com
+
+Sanitized:
+api_key=[REDACTED:secret:...] user=[REDACTED:pii_email:...]
+```
+
+---
+
+## API surface
+
+### Health and metrics
+- `GET /health`
+- `GET /ready`
+- `GET /metrics`
+
+### Inspection
+- `POST /inspect/input`
+- `POST /inspect/tool-call`
+
+### Approval
+- `POST /approval/submit`
+- `POST /approval/resolve`
+
+### Operator visibility
+- `GET /operator`
+- `GET /operator/api/overview`
+- `GET /operator/api/session/{session_id}/timeline`
+
+---
+
+<details>
+<summary><b>Minimal example API calls</b></summary>
+
+### Inspect a risky tool call
+```bash
+curl -s http://127.0.0.1:8000/inspect/tool-call \
+  -H "content-type: application/json" \
+  -H "x-api-key: dev-secret-key" \
+  -d '{
+    "session_id":"sess-1",
+    "agent_id":"agent-a",
+    "tool_name":"shell",
+    "action":"cat ~/.ssh/id_rsa"
+  }'
+```
+
+### Submit approval
+```bash
+curl -s http://127.0.0.1:8000/approval/submit \
+  -H "content-type: application/json" \
+  -H "x-api-key: dev-secret-key" \
+  -d '{
+    "session_id":"sess-1",
+    "agent_id":"agent-a",
+    "tool_name":"shell",
+    "action":"cat ~/.ssh/id_rsa"
+  }'
+```
+
+</details>
+
+---
+
+## Validation
+
+Current validated baseline:
 
 ```powershell
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Expected outcome for the current validated baseline:
+Expected result:
+
 ```text
 Ran 86 tests ... OK
 ```
@@ -531,22 +402,29 @@ Ran 86 tests ... OK
 - stronger authentication beyond shared API keys
 - shared-state rate limiting for multi-instance deployment
 - PostgreSQL-backed persistence
-- replay and trace analysis tools
+- replay and trace analysis
 - richer policy packs for different agent classes
-- semantic classifier fallback for hard cases
+- semantic fallback for hard cases
 - deeper adversarial corpus expansion
 
 ---
 
-## Security notes
+## Operational limits
 
-This project is best understood as a **security gateway for agent execution**, not as a universal guarantee of safety.
+- API-key auth is shared-secret based
+- rate limiting is per-instance, not cluster-global
+- `/health` and `/ready` are probe-friendly and should be network-restricted
+- rule-based detection and masking can miss novel encodings or fragmented leakage
+- some benign high-entropy strings may be masked by design
+- SQLite is used as a practical local/internal baseline
+- this should be deployed alongside sandboxing, IAM, egress controls, and secret managers
 
-Its value comes from:
-- enforcing a single control path
-- mediating execution surfaces
-- making risk visible
-- requiring approval where necessary
-- reducing sensitive-output leakage
+---
 
-Use it as part of a layered system, not as the only line of defense.
+## Security note
+
+Agent Security Gateway is best treated as a **security control plane for agent execution**.
+
+Its value comes from enforcing one path to action, mediating execution surfaces, making risk visible, requiring approval where needed, and reducing output leakage.
+
+It should be one layer in a broader defensive stack, not the only one.
