@@ -428,3 +428,8 @@ Agent Security Gateway is best treated as a **security control plane for agent e
 Its value comes from enforcing one path to action, mediating execution surfaces, making risk visible, requiring approval where needed, and reducing output leakage.
 
 It should be one layer in a broader defensive stack, not the only one.
+
+---
+
+## Development note: 
+built with GPT and Codex assistance in ~6 hours, then reviewed, tested, and finalized by the author.
