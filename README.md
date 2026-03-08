@@ -76,7 +76,9 @@ Includes:
 - approval persistence
 - audit persistence
 - redaction pipeline
+- logging utilities
 - thin execution adapters
+- direct library and CLI entrypoints
 
 ### `gateway` service
 An HTTP service layered over the firewall library.
@@ -161,7 +163,7 @@ The gateway can return the following enforcement decisions:
 1. Tool output is sent through the central redaction pipeline
 2. Sanitized output is used for post-inspection
 3. Decision metadata and audit records are updated
-4. Caller receives either raw-safe or sanitized output
+4. Caller receives either safe raw output or sanitized output
 
 ---
 
@@ -403,7 +405,7 @@ curl -s http://127.0.0.1:8000/approval/submit \
 ### Strict
 - `FIREWALL_CONFIG=configs/strict_profile.json`
 - higher sensitivity
-- more aggressive blocking / redaction posture
+- more aggressive blocking and redaction posture
 - greater false-positive risk
 
 ---
@@ -442,39 +444,69 @@ It does **not** guarantee:
 
 ## Repository structure
 
+The current repository layout includes the root files, config profiles, firewall library, gateway service, benchmark script, and tests shown in your actual tree. fileciteturn3file0
+
 ```text
-firewall/
-  adapters.py
-  approval_store.py
-  audit_store.py
-  chain_guard.py
-  client.py
-  config.py
-  detectors.py
-  engine.py
-  models.py
-  policy.py
-  redaction.py
-  session_risk.py
-  session_store.py
-  types.py
-
-gateway/
-  app.py
-  controls.py
-  routes_approval.py
-  routes_health.py
-  routes_inspect.py
-  routes_operator.py
-  service.py
-
-configs/
-  dev_profile.json
-  production_profile.json
-  strict_profile.json
-
-tests/
-  test_*.py
+.
+├── .dockerignore
+├── .gitignore
+├── Dockerfile
+├── firewall_config.example.json
+├── gateway_sessions.sqlite3
+├── pyproject.toml
+├── README.md
+├── configs/
+│   ├── dev_profile.json
+│   ├── production_profile.json
+│   └── strict_profile.json
+├── firewall/
+│   ├── __init__.py
+│   ├── adapters.py
+│   ├── api.py
+│   ├── approval_store.py
+│   ├── audit_store.py
+│   ├── chain_guard.py
+│   ├── client.py
+│   ├── config.py
+│   ├── detectors.py
+│   ├── engine.py
+│   ├── gateway.py
+│   ├── logging_utils.py
+│   ├── main.py
+│   ├── models.py
+│   ├── policy.py
+│   ├── redaction.py
+│   ├── session_risk.py
+│   ├── session_store.py
+│   └── types.py
+├── gateway/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── controls.py
+│   ├── routes_approval.py
+│   ├── routes_health.py
+│   ├── routes_inspect.py
+│   ├── routes_operator.py
+│   └── service.py
+├── scripts/
+│   └── benchmark_firewall.py
+└── tests/
+    ├── corpus/
+    │   └── security_cases.json
+    ├── test_adapters.py
+    ├── test_adversarial_vectors.py
+    ├── test_approval_flow.py
+    ├── test_cli.py
+    ├── test_config.py
+    ├── test_corpus.py
+    ├── test_engine.py
+    ├── test_firewall.py
+    ├── test_gateway.py
+    ├── test_gateway_http.py
+    ├── test_operator_console.py
+    ├── test_redaction.py
+    ├── test_redaction_gateway.py
+    └── test_types_api.py
 ```
 
 ---
