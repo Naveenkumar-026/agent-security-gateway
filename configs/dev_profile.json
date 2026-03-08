@@ -1,0 +1,22 @@
+{
+  "policy": {
+    "block_score": 2.4,
+    "challenge_score": 1.2,
+    "block_high_count": 2,
+    "block_if_critical": true,
+    "detector_score_cap": 2.0,
+    "max_findings_per_detector": 15
+  },
+  "logging": {
+    "level": "DEBUG",
+    "structured": true,
+    "redact_sensitive": false
+  },
+  "detector_toggles": {
+    "prompt_injection": true,
+    "secret_leakage": true,
+    "tool_abuse": true,
+    "policy_drift": true,
+    "unsafe_action_chain": true
+  }
+}

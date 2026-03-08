@@ -1,0 +1,11 @@
+﻿.git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+tests/
+scripts/
+configs/
+.vscode/
+.idea/

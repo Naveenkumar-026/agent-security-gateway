@@ -1,0 +1,62 @@
+{
+  "policy": {
+    "block_score": 1.8,
+    "challenge_score": 0.9,
+    "block_high_count": 2,
+    "block_if_critical": true,
+    "detector_score_cap": 1.5,
+    "max_findings_per_detector": 8
+  },
+  "logging": {
+    "level": "INFO",
+    "structured": true,
+    "redact_sensitive": true
+  },
+  "detector_toggles": {
+    "prompt_injection": true,
+    "secret_leakage": true,
+    "tool_abuse": true,
+    "policy_drift": true,
+    "unsafe_action_chain": true
+  },
+  "sensitive_actions": {
+    "exec_shell": ["high", 0.7],
+    "write_filesystem": ["medium", 0.45],
+    "network_exfiltration": ["critical", 0.95],
+    "permission_escalation": ["critical", 1.0]
+  },
+  "chain_rules": [
+    {
+      "name": "memory_plus_network",
+      "required_actions": ["read_memory", "network_exfiltration"],
+      "ordered": true,
+      "severity": "critical",
+      "score": 0.95,
+      "message": "Memory read followed by network path may exfiltrate sensitive data."
+    },
+    {
+      "name": "shell_plus_privilege_escalation",
+      "required_actions": ["exec_shell", "permission_escalation"],
+      "ordered": false,
+      "severity": "critical",
+      "score": 1.0,
+      "message": "Shell execution plus privilege escalation detected."
+    },
+    {
+      "name": "shell_plus_network",
+      "required_actions": ["exec_shell", "network_exfiltration"],
+      "ordered": false,
+      "severity": "high",
+      "score": 0.75,
+      "message": "Shell + network combination requires review."
+    },
+    {
+      "name": "memory_plus_shell",
+      "required_actions": ["read_memory", "exec_shell"],
+      "ordered": true,
+      "severity": "high",
+      "score": 0.7,
+      "message": "Memory read followed by shell execution is high risk."
+    }
+  ]
+}

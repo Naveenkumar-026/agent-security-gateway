@@ -1,0 +1,36 @@
+﻿{
+  "policy": {
+    "block_score": 1.3,
+    "challenge_score": 0.55,
+    "block_high_count": 1,
+    "block_if_critical": true,
+    "detector_score_cap": 1.1,
+    "max_findings_per_detector": 5,
+    "allow_with_redaction": true
+  },
+  "logging": {
+    "level": "WARNING",
+    "structured": true,
+    "redact_sensitive": true
+  },
+  "redaction": {
+    "enabled": true,
+    "mask_pii": true,
+    "high_entropy_min_entropy": 3.8,
+    "high_entropy_min_length": 18,
+    "max_masked_items_per_output": 24
+  },
+  "detector_toggles": {
+    "prompt_injection": true,
+    "secret_leakage": true,
+    "tool_abuse": true,
+    "policy_drift": true,
+    "unsafe_action_chain": true
+  },
+  "sensitive_actions": {
+    "exec_shell": ["high", 0.85],
+    "write_filesystem": ["high", 0.7],
+    "network_exfiltration": ["critical", 1.0],
+    "permission_escalation": ["critical", 1.0]
+  }
+}
