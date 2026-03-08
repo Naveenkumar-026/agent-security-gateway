@@ -431,5 +431,6 @@ It should be one layer in a broader defensive stack, not the only one.
 
 ---
 
-## Development note: 
-built with GPT and Codex assistance in ~6 hours, then reviewed, tested, and finalized by the author.
+## Development note
+
+Built with GPT and Codex assistance in ~6 hours, then reviewed, tested, and finalized by the author.
